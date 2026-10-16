@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Desa Melati - Visual Novel Horor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══ DYNAMIC BACKGROUND LAYERS (CROSSFADE 0.6s) ═══ -->
+  <div id="bg-container">
+    <div id="bg-layer-1" class="bg-layer active"></div>
+    <div id="bg-layer-2" class="bg-layer"></div>
+    <div id="bg-vignette"></div>
+    <div id="fx-overlay"></div>
+  </div>
+
+  <!-- ═══ PRELOAD / LOADING SCREEN ═══ -->
+  <div id="screen-loading">
+    <div class="loading-content">
+      <h2 class="loading-title">Memuat Aset Desa Melati...</h2>
+      <div class="loading-track">
+        <div id="loading-fill"></div>
+      </div>
+      <p id="loading-status">0%</p>
+    </div>
+  </div>
+
+  <!-- ═══ TITLE SCREEN ═══ -->
+  <div id="screen-title" class="hidden">
+    <div class="title-content">
+      <h1 id="game-title">Desa Melati</h1>
+      <p class="title-sub">Interactive Horror Novel · KKN 2008</p>
+      <p id="title-endings">Ending ditemukan: 0/7</p>
+      <div class="title-buttons">
+        <button id="btn-start" class="btn-primary">Mulai Cerita</button>
+        <button id="btn-continue" class="btn-secondary hidden">Lanjutkan</button>
+        <button id="btn-collection" class="btn-secondary">Koleksi <span id="badge-collection" class="collection-badge">0/1</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STORY SCREEN ═══ -->
+  <div id="screen-story" class="hidden">
+    <!-- Save Toast Notification -->
+    <div id="save-toast" class="save-toast hidden">💾 Cerita Tersimpan</div>
+
+    <!-- Top info bar -->
+    <div class="top-bar">
+      <div class="chapter-info">
+        <div class="chapter-header-row">
+          <span id="chapter-title">Babak 1</span>
+          <span id="scene-label" class="scene-label"></span>
+        </div>
+        <div class="progress-track"><div id="progress-fill"></div></div>
+      </div>
+      <div class="top-actions">
+        <button id="btn-log" class="icon-btn" title="Riwayat Dialog (Log)">📜</button>
+        <button id="btn-fullscreen" class="icon-btn" title="Layar Penuh (F11)">⛶</button>
+        <button id="btn-undo" class="icon-btn" title="Undo (kembali)">↩</button>
+        <button id="btn-settings" class="icon-btn" title="Pengaturan">⚙</button>
+      </div>
+    </div>
+
+    <!-- Settings panel -->
+    <div id="settings-panel" class="hidden">
+      <div class="settings-title">Pengaturan</div>
+
+      <div class="setting-row">
+        <span class="setting-label">Kecepatan Teks</span>
+        <div class="setting-options">
+          <label><input type="radio" name="speed" value="slow"> Lambat</label>
+          <label><input type="radio" name="speed" value="normal" checked> Normal</label>
+          <label><input type="radio" name="speed" value="fast"> Cepat</label>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Musik Latar Horor (BGM)</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-bgm" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Efek Suara Horor (SFX)</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-sound" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ═══ CHARACTER SPRITE STAGE ═══ -->
+    <div id="sprite-stage"></div>
+
+    <!-- ═══ DIALOG AREA ═══ -->
+    <div class="dialog-area">
+      <div class="dialog-box">
+        <div id="speaker-name"></div>
+        <div id="story-text"></div>
+      </div>
+
+      <!-- Choices / Continue -->
+      <div id="choices"></div>
+      <div id="key-hints"></div>
+    </div>
+
+    <!-- ═══ EASTER EGG: SECRET OBSTACLE / TALISMAN ═══ -->
+    <div id="secret-obstacle" class="secret-obstacle hidden" title="Ada aura aneh bergetar di sini... Klik untuk menyelidiki!">
+      <span class="secret-icon">📜</span>
+      <span class="secret-pulse"></span>
+    </div>
+
+    <!-- ═══ DIALOG LOG / HISTORY MODAL ═══ -->
+    <div id="modal-log" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Riwayat Dialog</h3>
+          <button id="btn-close-log" class="close-btn" title="Tutup">&times;</button>
+        </div>
+        <div id="log-list" class="modal-body"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ EASTER EGG MODAL ═══ -->
+  <div id="modal-easter-egg" class="modal-overlay easter-egg-overlay hidden">
+    <div class="easter-egg-card">
+      <button id="btn-close-easter" class="close-btn" title="Tutup">&times;</button>
+      <div class="easter-egg-badge">✨ EASTER EGG RAHASIA DITEMUKAN ✨</div>
+      <div class="easter-egg-stage">
+        <img src="assets/easter_egg_ghost.png" alt="Hantu Cantik Easter Egg" class="easter-egg-sprite">
+      </div>
+      <div class="easter-egg-dialog">
+        <div class="easter-egg-speaker">👻 Sosok Gaib Menggoda</div>
+        <p class="easter-egg-text">"Ara ara~... Ternyata kamu bisa nemuin aku di sudut Desa Melati ini? Berani juga ya, kupikir kamu cuma lari ketakutan sama teror desa... Jangan lupa istirahat ya, Mas~ hihihi ❤️"</p>
+      </div>
+      <button id="btn-dismiss-easter" class="btn-primary easter-btn">Lanjut Eksplorasi ▸</button>
+    </div>
+  </div>
+
+  <!-- ═══ KOLEKSI (COLLECTION) MODAL ═══ -->
+  <div id="modal-collection" class="modal-overlay hidden">
+    <div class="modal-card collection-card">
+      <div class="modal-header">
+        <h3>Galeri Koleksi Rahasia</h3>
+        <button id="btn-close-collection" class="close-btn" title="Tutup">&times;</button>
+      </div>
+      <div id="collection-content" class="modal-body collection-body"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ENDING SCREEN ═══ -->
+  <div id="screen-ending" class="hidden">
+    <div class="ending-content">
+      <div id="ending-badge" class="ending-badge">ENDING</div>
+      <h2 id="ending-title">Ending</h2>
+      <div id="ending-text"></div>
+      <p id="ending-count">Ending ditemukan: 0/7</p>
+      <div class="ending-buttons">
+        <button id="btn-replay" class="btn-primary">Main Lagi</button>
+        <button id="btn-menu" class="btn-secondary">Ke Menu Utama</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="story.js"></script>
+  <script src="engine.js"></script>
+  <script src="protect.js"></script>
+</body>
+</html>
