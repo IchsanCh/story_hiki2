@@ -1348,7 +1348,7 @@ function closeBapakEasterEgg() {
   if (modal) modal.classList.add("hidden");
 }
 
-// "Ketuk Pintu" — klik 5x cepat di zona tersembunyi pojok kiri bawah dialog
+// "Ketuk Pintu" — klik 5x cepat di zona pintu posko (pojok kanan bawah dialog box)
 let knockCount = 0;
 let knockTimer = null;
 
@@ -1364,19 +1364,29 @@ function handleKnockClick() {
   // Animasi getar/ketuk pada ikon pintu
   const icon = $("#secret-knock-zone .knock-icon");
   if (icon) {
-    icon.style.transform = `scale(${1 + knockCount * 0.12}) rotate(${knockCount % 2 === 0 ? -12 : 12}deg)`;
+    icon.style.transform = `scale(${1 + knockCount * 0.14}) rotate(${knockCount % 2 === 0 ? -15 : 15}deg)`;
     setTimeout(() => {
       if (icon) icon.style.transform = "";
-    }, 140);
+    }, 150);
+  }
+
+  // Tampilkan hitungan di badge
+  const ind = $("#secret-knock-zone .knock-indicator");
+  if (ind) {
+    ind.textContent = `${knockCount}/5`;
   }
 
   if (knockTimer) clearTimeout(knockTimer);
   knockTimer = setTimeout(() => {
     knockCount = 0;
-  }, 2200);
+    const resetInd = $("#secret-knock-zone .knock-indicator");
+    if (resetInd) resetInd.textContent = "";
+  }, 3500);
 
   if (knockCount >= 5) {
     knockCount = 0;
+    const finalInd = $("#secret-knock-zone .knock-indicator");
+    if (finalInd) finalInd.textContent = "";
     triggerBapakEasterEgg();
   }
 }
