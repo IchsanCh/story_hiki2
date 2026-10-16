@@ -268,6 +268,27 @@ const AudioEngine = (() => {
     }
   }
 
+  let bapakAudio = null;
+  function playBapakVoice() {
+    if (!sfxEnabled) return;
+    try {
+      init();
+      if (!bapakAudio) {
+        bapakAudio = new Audio("Voice/ada-bapak-bapak.mp3");
+      }
+      bapakAudio.currentTime = 0;
+      bapakAudio.volume = 0.95;
+      const playPromise = bapakAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Bapak audio play error:", err);
+        });
+      }
+    } catch (err) {
+      console.warn("Bapak audio error:", err);
+    }
+  }
+
   return {
     init,
     click: () => beep(650, 0.05, "sine", 0.06),
@@ -279,6 +300,7 @@ const AudioEngine = (() => {
     },
     playFx,
     playEasterEggVoice,
+    playBapakVoice,
     startBgm,
     stopBgm,
     set sfxEnabled(v) { sfxEnabled = v; },
@@ -1184,12 +1206,14 @@ function unlockEasterEgg() {
 function updateCollectionBadge() {
   const badge = $("#badge-collection");
   if (!badge) return;
-  if (isEasterEggUnlocked()) {
-    badge.textContent = "1/1 ✨";
+  const count = (isEasterEggUnlocked() ? 1 : 0) + (isBapakUnlocked() ? 1 : 0);
+  const total = 2;
+  if (count > 0) {
+    badge.textContent = `${count}/${total} ✨`;
     badge.style.borderColor = "rgba(255, 182, 193, 0.7)";
     badge.style.boxShadow = "0 0 10px rgba(255, 105, 180, 0.5)";
   } else {
-    badge.textContent = "0/1";
+    badge.textContent = `0/${total}`;
     badge.style.borderColor = "rgba(255, 255, 255, 0.15)";
     badge.style.boxShadow = "none";
   }
@@ -1279,26 +1303,82 @@ function handleSecretClick() {
   }
 }
 
+/* ─── EASTER EGG BAPAK ─── */
+const EASTER_EGG_BAPAK_KEY = "desa_melati_easter_egg_bapak";
+
+function isBapakUnlocked() {
+  try {
+    return localStorage.getItem(EASTER_EGG_BAPAK_KEY) === "true";
+  } catch (_) {
+    return false;
+  }
+}
+
+function unlockBapak() {
+  try {
+    localStorage.setItem(EASTER_EGG_BAPAK_KEY, "true");
+    updateCollectionBadge();
+  } catch (_) {}
+}
+
+function triggerBapakEasterEgg() {
+  unlockBapak();
+  AudioEngine.playBapakVoice();
+  AudioEngine.playFx("flash");
+  const modal = $("#modal-easter-egg-bapak");
+  if (modal) modal.classList.remove("hidden");
+}
+
+function closeBapakEasterEgg() {
+  AudioEngine.click();
+  const modal = $("#modal-easter-egg-bapak");
+  if (modal) modal.classList.add("hidden");
+}
+
+// "Ketuk Pintu" — klik 5x cepat di zona tersembunyi pojok kiri bawah dialog
+let knockCount = 0;
+let knockTimer = null;
+
+function handleKnockClick() {
+  // Hanya aktif saat bermain (screen-story visible) dan belum unlock
+  if (isBapakUnlocked()) return;
+  const storyScreen = $("#screen-story");
+  if (!storyScreen || storyScreen.classList.contains("hidden")) return;
+
+  knockCount++;
+  if (knockTimer) clearTimeout(knockTimer);
+  knockTimer = setTimeout(() => {
+    knockCount = 0;
+  }, 2000);
+
+  if (knockCount >= 5) {
+    knockCount = 0;
+    triggerBapakEasterEgg();
+  }
+}
+
 /* ─── FITUR KOLEKSI (DASHBOARD) ─── */
 function renderCollection() {
   const container = $("#collection-content");
   if (!container) return;
 
-  const unlocked = isEasterEggUnlocked();
+  const ghostUnlocked = isEasterEggUnlocked();
+  const bapakUnlocked = isBapakUnlocked();
+  const count = (ghostUnlocked ? 1 : 0) + (bapakUnlocked ? 1 : 0);
+
   container.innerHTML = `
     <div class="collection-summary">
       <span class="collection-summary-title">Status Penemuan Rahasia</span>
-      <span class="collection-summary-count">${unlocked ? "1/1 Ditemukan ✨" : "0/1 Ditemukan"}</span>
+      <span class="collection-summary-count">${count}/2 Ditemukan ${count > 0 ? "✨" : ""}</span>
     </div>
-    ${
-      unlocked
-        ? `
-      <div class="collection-item unlocked">
+
+    ${ghostUnlocked
+      ? `<div class="collection-item unlocked">
         <div class="collection-thumb-wrapper">
           <img src="assets/easter_egg_ghost.png" alt="Sosok Gaib Misterius" class="collection-thumb-img">
         </div>
         <div class="collection-info">
-          <span class="collection-item-tag">✨ RAHASIA DESA MELATI</span>
+          <span class="collection-item-tag">✨ RAHASIA DESA MELATI #1</span>
           <h4 class="collection-item-name">Sosok Gaib Misterius (Easter Egg)</h4>
           <p class="collection-item-desc">"Ara ara~... Ternyata kamu bisa nemuin aku di sudut Desa Melati ini? Berani juga ya, kupikir kamu cuma lari ketakutan sama teror desa... Jangan lupa istirahat ya, Mas~ hihihi ❤️"</p>
           <div class="collection-actions">
@@ -1306,17 +1386,38 @@ function renderCollection() {
             <button id="btn-collection-view" class="btn-secondary">Lihat Karakter 👁️</button>
           </div>
         </div>
-      </div>
-    `
-        : `
-      <div class="collection-item locked">
+      </div>`
+      : `<div class="collection-item locked">
         <div class="collection-locked-icon">🔒</div>
         <div class="collection-locked-info">
-          <div class="collection-locked-title">??? (Koleksi Rahasia Terkunci)</div>
+          <div class="collection-locked-title">??? (Koleksi Rahasia #1 Terkunci)</div>
           <p class="collection-locked-hint">Ada penampakan gaib rahasia yang tersembunyi di dalam cerita. Temukan benda melayang misterius yang terkadang muncul di sudut adegan saat kamu menjelajahi Desa Melati...</p>
         </div>
-      </div>
-    `
+      </div>`
+    }
+
+    ${bapakUnlocked
+      ? `<div class="collection-item unlocked">
+        <div class="collection-thumb-wrapper" style="background: radial-gradient(circle, rgba(30, 90, 200, 0.25) 0%, rgba(10, 8, 16, 0.65) 80%);">
+          <img src="assets/easter_egg_bapak.png" alt="Bapak-Bapak Misterius" class="collection-thumb-img">
+        </div>
+        <div class="collection-info">
+          <span class="collection-item-tag">🚪 RAHASIA DESA MELATI #2</span>
+          <h4 class="collection-item-name">Bapak-Bapak Misterius (Easter Egg)</h4>
+          <p class="collection-item-desc">"Ada... bapak-bapak di depan posko. Dia cuma duduk diam di sana, memeluk lututnya... Tidak mau bicara. Tidak mau pergi. Siapa dia? Dari mana asalnya? Dan kenapa ada di sini malam-malam...?"</p>
+          <div class="collection-actions">
+            <button id="btn-bapak-voice" class="btn-primary">Putar Suara 🔊</button>
+            <button id="btn-bapak-view" class="btn-secondary">Lihat Karakter 👁️</button>
+          </div>
+        </div>
+      </div>`
+      : `<div class="collection-item locked">
+        <div class="collection-locked-icon">🚪</div>
+        <div class="collection-locked-info">
+          <div class="collection-locked-title">??? (Koleksi Rahasia #2 Terkunci)</div>
+          <p class="collection-locked-hint">Terdengar suara ketukan pelan dari suatu tempat... Coba perhatikan baik-baik — mungkin ada sesuatu yang bersembunyi di sudut yang tidak kamu kira.</p>
+        </div>
+      </div>`
     }
   `;
 
@@ -1334,6 +1435,24 @@ function renderCollection() {
       AudioEngine.click();
       closeCollectionModal();
       const modal = $("#modal-easter-egg");
+      if (modal) modal.classList.remove("hidden");
+    });
+  }
+
+  const btnBapakVoice = $("#btn-bapak-voice");
+  if (btnBapakVoice) {
+    btnBapakVoice.addEventListener("click", () => {
+      AudioEngine.click();
+      AudioEngine.playBapakVoice();
+    });
+  }
+
+  const btnBapakView = $("#btn-bapak-view");
+  if (btnBapakView) {
+    btnBapakView.addEventListener("click", () => {
+      AudioEngine.click();
+      closeCollectionModal();
+      const modal = $("#modal-easter-egg-bapak");
       if (modal) modal.classList.remove("hidden");
     });
   }
@@ -1366,6 +1485,13 @@ document.addEventListener("keydown", (e) => {
     if (easterModal && !easterModal.classList.contains("hidden")) {
       e.preventDefault();
       closeEasterEgg();
+      return;
+    }
+
+    const bapakModal = $("#modal-easter-egg-bapak");
+    if (bapakModal && !bapakModal.classList.contains("hidden")) {
+      e.preventDefault();
+      closeBapakEasterEgg();
       return;
     }
 
@@ -1409,6 +1535,11 @@ document.addEventListener("keydown", (e) => {
       closeEasterEgg();
       return;
     }
+    const bapakModal2 = $("#modal-easter-egg-bapak");
+    if (bapakModal2 && !bapakModal2.classList.contains("hidden")) {
+      closeBapakEasterEgg();
+      return;
+    }
     const modal = $("#modal-log");
     if (modal && !modal.classList.contains("hidden")) {
       closeLogModal();
@@ -1427,8 +1558,10 @@ document.addEventListener("click", (e) => {
     e.target.closest("#settings-panel") ||
     e.target.closest("#modal-log") ||
     e.target.closest("#modal-easter-egg") ||
+    e.target.closest("#modal-easter-egg-bapak") ||
     e.target.closest("#modal-collection") ||
-    e.target.closest("#secret-obstacle")
+    e.target.closest("#secret-obstacle") ||
+    e.target.closest("#secret-knock-zone")
   ) return;
   skipTyping();
 });
@@ -1495,6 +1628,29 @@ window.addEventListener("DOMContentLoaded", () => {
   const chTitle = $("#chapter-title");
   if (chTitle) chTitle.addEventListener("click", handleSecretClick);
   const scLabel = $("#scene-label");
+
+  // Easter Egg Bapak bindings — "Ketuk Pintu"
+  const knockZone = $("#secret-knock-zone");
+  if (knockZone) {
+    knockZone.addEventListener("click", (e) => {
+      e.stopPropagation();
+      handleKnockClick();
+    });
+  }
+
+  const btnCloseBapak = $("#btn-close-bapak");
+  if (btnCloseBapak) btnCloseBapak.addEventListener("click", closeBapakEasterEgg);
+
+  const btnDismissBapak = $("#btn-dismiss-bapak");
+  if (btnDismissBapak) btnDismissBapak.addEventListener("click", closeBapakEasterEgg);
+
+  const modalBapak = $("#modal-easter-egg-bapak");
+  if (modalBapak) {
+    modalBapak.addEventListener("click", (e) => {
+      if (e.target === modalBapak) closeBapakEasterEgg();
+    });
+  }
+
   if (scLabel) scLabel.addEventListener("click", handleSecretClick);
 
   // Close log modal on outside click
