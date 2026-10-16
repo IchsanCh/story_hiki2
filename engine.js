@@ -966,6 +966,9 @@ function showTitle() {
   $("#screen-ending").classList.add("hidden");
   $("#screen-title").classList.remove("hidden");
 
+  // Pasang background atmosferik gerbang desa untuk menu utama/dashboard
+  transitionBackground("bg_gerbang_desa");
+
   const endings = getEndingsFound();
   const total = STORY.endingsTotal || 7;
   $("#title-endings").textContent = `Ending ditemukan: ${endings.length}/${total}`;
@@ -1250,8 +1253,8 @@ function updateSecretObstacle(nodeId) {
     return;
   }
 
-  // Peluang 45% muncul di setiap adegan cerita
-  const shouldSpawn = Math.random() < 0.45;
+  // Peluang 5% muncul di setiap adegan cerita (0.05)
+  const shouldSpawn = Math.random() < 0.05;
   if (!shouldSpawn) {
     obstacle.classList.add("hidden");
     return;
@@ -1425,7 +1428,7 @@ function renderCollection() {
         <div class="collection-locked-icon">🔒</div>
         <div class="collection-locked-info">
           <div class="collection-locked-title">??? (Koleksi Rahasia #1 Terkunci)</div>
-          <p class="collection-locked-hint">Ada penampakan gaib rahasia yang tersembunyi di dalam cerita. Temukan benda melayang misterius yang terkadang muncul di sudut adegan saat kamu menjelajahi Desa Melati...</p>
+          <p class="collection-locked-hint">Ada penampakan gaib rahasia yang tersembunyi di dalam cerita. Temukan benda melayang misterius yang sangat langka (peluang 5%) muncul di sudut adegan saat kamu menjelajahi Desa Melati...</p>
         </div>
       </div>`
     }
