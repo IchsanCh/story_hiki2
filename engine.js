@@ -301,6 +301,10 @@ const AudioEngine = (() => {
     playFx,
     playEasterEggVoice,
     playBapakVoice,
+    knock: () => {
+      beep(200, 0.04, "triangle", 0.12);
+      setTimeout(() => beep(130, 0.06, "sine", 0.10), 20);
+    },
     startBgm,
     stopBgm,
     set sfxEnabled(v) { sfxEnabled = v; },
@@ -838,6 +842,13 @@ async function renderNode(nodeId, pushHistory = true) {
   // Update kemunculan rintangan/benda rahasia (Easter Egg)
   updateSecretObstacle(nodeId);
 
+  // Pastikan zona ketuk bapak hanya aktif jika belum didapatkan
+  const knockZone = $("#secret-knock-zone");
+  if (knockZone) {
+    if (isBapakUnlocked() || node.ending) knockZone.classList.add("hidden");
+    else knockZone.classList.remove("hidden");
+  }
+
   // Typewriter text
   const textEl = $("#story-text");
   const choicesEl = $("#choices");
@@ -1318,6 +1329,8 @@ function unlockBapak() {
   try {
     localStorage.setItem(EASTER_EGG_BAPAK_KEY, "true");
     updateCollectionBadge();
+    const knockZone = $("#secret-knock-zone");
+    if (knockZone) knockZone.classList.add("hidden");
   } catch (_) {}
 }
 
@@ -1346,10 +1359,21 @@ function handleKnockClick() {
   if (!storyScreen || storyScreen.classList.contains("hidden")) return;
 
   knockCount++;
+  AudioEngine.knock();
+
+  // Animasi getar/ketuk pada ikon pintu
+  const icon = $("#secret-knock-zone .knock-icon");
+  if (icon) {
+    icon.style.transform = `scale(${1 + knockCount * 0.12}) rotate(${knockCount % 2 === 0 ? -12 : 12}deg)`;
+    setTimeout(() => {
+      if (icon) icon.style.transform = "";
+    }, 140);
+  }
+
   if (knockTimer) clearTimeout(knockTimer);
   knockTimer = setTimeout(() => {
     knockCount = 0;
-  }, 2000);
+  }, 2200);
 
   if (knockCount >= 5) {
     knockCount = 0;
@@ -1415,7 +1439,7 @@ function renderCollection() {
         <div class="collection-locked-icon">🚪</div>
         <div class="collection-locked-info">
           <div class="collection-locked-title">??? (Koleksi Rahasia #2 Terkunci)</div>
-          <p class="collection-locked-hint">Terdengar suara ketukan pelan dari suatu tempat... Coba perhatikan baik-baik — mungkin ada sesuatu yang bersembunyi di sudut yang tidak kamu kira.</p>
+          <p class="collection-locked-hint">Terdengar suara ketukan dari arah pintu posko... Coba ketuk pintu rahasia (🚪) di pojok kiri bawah dialog sebanyak 5 kali secara cepat saat berada di dalam cerita untuk memanggilnya!</p>
         </div>
       </div>`
     }

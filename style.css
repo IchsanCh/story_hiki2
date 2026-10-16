@@ -1138,18 +1138,35 @@ input:checked + .toggle-slider::before {
   position: absolute;
   bottom: 0.6rem;
   left: 0.6rem;
-  width: 70px;
-  height: 70px;
+  width: 50px;
+  height: 50px;
   cursor: pointer;
   z-index: 30;
-  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  opacity: 0.22;
+  transition: opacity 0.25s ease, transform 0.15s ease;
+}
+
+#secret-knock-zone .knock-icon {
+  font-size: 1.25rem;
+  filter: drop-shadow(0 0 6px rgba(100, 160, 255, 0.6));
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-block;
+  pointer-events: none;
+}
+
+#secret-knock-zone:hover {
+  opacity: 0.85;
+  transform: scale(1.1);
 }
 
 #secret-knock-zone:active {
-  background: radial-gradient(circle, rgba(100, 160, 255, 0.15) 0%, transparent 70%);
   opacity: 1;
+  transform: scale(0.92);
 }
 
 @keyframes spriteRise {
